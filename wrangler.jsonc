@@ -10,6 +10,7 @@
   "observability": {
     "enabled": true
   },
+  //konfigurasi untuk menyambungkan ke database di cloudflare
   "d1_databases": [
     {
       "binding": "DB",

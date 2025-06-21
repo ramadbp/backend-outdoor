@@ -2,6 +2,22 @@ import { Hono } from "hono";
 
 const app = new Hono();
 
+// Middleware manual untuk CORS
+app.use("/api/*", async (c, next) => {
+  await next();
+  c.header("Access-Control-Allow-Origin", "https://outdoorcamp.pages.dev");
+  c.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  c.header("Access-Control-Allow-Headers", "Content-Type");
+});
+
+// Handler untuk preflight (OPTIONS request)
+app.options("/api/*", (c) => {
+  c.header("Access-Control-Allow-Origin", "https://outdoorcamp.pages.dev");
+  c.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  c.header("Access-Control-Allow-Headers", "Content-Type");
+  return new Response(null, { status: 204 });
+});
+
 // Tes koneksi API
 app.get("/api", (c) => {
   return c.text("hi");

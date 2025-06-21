@@ -1,82 +1,53 @@
-export default {
-  async fetch(request, env, ctx) {
-    const url = new URL(request.url);
-    const { pathname } = url;
+import { Hono } from "hono";
 
-    // CORS preflight
-    if (request.method === "OPTIONS") {
-      return new Response(null, {
-        status: 204,
-        headers: corsHeaders,
-      });
-    }
+const app = new Hono();
 
-    // GET semua alat
-    if (pathname === "/api/alat" && request.method === "GET") {
-      const { results } = await env.DB.prepare("SELECT * FROM alat").all();
-      return jsonResponse(results);
-    }
+// Tes koneksi API
+app.get("/api", (c) => {
+  return c.text("hi");
+});
 
-    // Tambah alat
-    if (pathname === "/api/alat" && request.method === "POST") {
-      const { nama, deskripsi, harga } = await request.json();
-      await env.DB.prepare(
-        "INSERT INTO alat (nama, deskripsi, harga) VALUES (?, ?, ?)"
-      )
-        .bind(nama, deskripsi, harga)
-        .run();
+// GET semua alat
+app.get("/api/alat", async (c) => {
+  const { results } = await c.env.DB.prepare("SELECT * FROM alat").all();
+  return c.json(results);
+});
 
-      return new Response("Alat ditambahkan", {
-        status: 201,
-        headers: corsHeaders,
-      });
-    }
+// GET alat by ID
+app.get("/api/alat/:id", async (c) => {
+  const id = c.req.param("id");
+  const { results } = await c.env.DB.prepare("SELECT * FROM alat WHERE id = ?")
+    .bind(id)
+    .all();
+  return c.json(results[0] || {});
+});
 
-    // Update alat
-    if (pathname.startsWith("/api/alat/") && request.method === "PUT") {
-      const id = pathname.split("/").pop();
-      const { nama, deskripsi, harga } = await request.json();
-      await env.DB.prepare(
-        "UPDATE alat SET nama = ?, deskripsi = ?, harga = ? WHERE id = ?"
-      )
-        .bind(nama, deskripsi, harga, id)
-        .run();
+// POST tambah alat
+app.post("/api/alat", async (c) => {
+  const input = await c.req.json();
+  const query = `INSERT INTO alat (nama, deskripsi, harga) VALUES ("${input.nama}", "${input.deskripsi}", "${input.harga}")`;
+  const result = await c.env.DB.exec(query);
+  return c.json(result);
+});
 
-      return new Response("Alat diperbarui", {
-        status: 200,
-        headers: corsHeaders,
-      });
-    }
+// PUT update alat
+app.put("/api/alat/:id", async (c) => {
+  const id = c.req.param("id");
+  const input = await c.req.json();
+  const query = `UPDATE alat SET nama = "${input.nama}", deskripsi = "${input.deskripsi}", harga = "${input.harga}" WHERE id = "${id}"`;
+  const result = await c.env.DB.exec(query);
+  return c.json(result);
+});
 
-    // Hapus alat
-    if (pathname.startsWith("/api/alat/") && request.method === "DELETE") {
-      const id = pathname.split("/").pop();
-      await env.DB.prepare("DELETE FROM alat WHERE id = ?").bind(id).run();
+// DELETE alat
+app.delete("/api/alat/:id", async (c) => {
+  const id = c.req.param("id");
+  const query = `DELETE FROM alat WHERE id = "${id}"`;
+  const result = await c.env.DB.exec(query);
+  return c.json(result);
+});
 
-      return new Response("Alat dihapus", {
-        status: 200,
-        headers: corsHeaders,
-      });
-    }
+// Static file handler jika ada
+app.get("*", (c) => c.env.ASSETS.fetch(c.req.raw));
 
-    return new Response("Not Found", {
-      status: 404,
-      headers: corsHeaders,
-    });
-  },
-};
-
-// ===== Helper =====
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-  "Content-Type": "application/json",
-};
-
-function jsonResponse(data) {
-  return new Response(JSON.stringify(data), {
-    status: 200,
-    headers: corsHeaders,
-  });
-}
+export default app;

@@ -4,3 +4,4 @@ CREATE TABLE IF NOT EXISTS alat (
   deskripsi TEXT,
   harga INTEGER NOT NULL
 );
+-- membuat migrasi untuk tabel alat

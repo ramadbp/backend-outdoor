@@ -1,0 +1,7 @@
+name = "backend-outdoor"
+compatibility_date = "2025-05-11"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "outdoor_db"
+database_id = "c5a75b66-8c9e-45f5-a218-7a4cf419baab"
